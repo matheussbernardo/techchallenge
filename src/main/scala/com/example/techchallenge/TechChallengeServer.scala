@@ -3,15 +3,15 @@ package com.example.techchallenge
 import cats.effect.Async
 import cats.syntax.all._
 import com.comcast.ip4s._
-import com.example.techchallenge.TechChallengeRoutes
+import com.example.techchallenge.user._
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits._
 import org.http4s.server.middleware.Logger
 object TechChallengeServer:
 
-  def run[F[_]: Async]: F[Nothing] = {
+  def run[F[_]: Async](userStore: UserStore[F]): F[Nothing] = {
     val httpApp = (
-      TechChallengeRoutes.userRoutes[F]
+      UserRoutes.routes[F](userStore)
     ).orNotFound
 
     val finalHttpApp = Logger.httpApp(true, true)(httpApp)
