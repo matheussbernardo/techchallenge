@@ -13,7 +13,7 @@ object Main extends IOApp.Simple:
 
   val transactor = Transactor.fromDriverManager[IO](
     "org.postgresql.Driver", // driver classname
-    "jdbc:postgresql:postgres", // connect URL (driver-specific)
+    "jdbc:postgresql://postgres:5432/postgres",
     "admin", // user
     "admin" // password
   )

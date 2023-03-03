@@ -1,6 +1,12 @@
 version: '3.5'
 
 services:
+  app:
+    container_name: app_tech_challenge
+    image: matheussbernardo/techchallenge:0.0.1-SNAPSHOT
+    ports:
+      - "8080:8080"
+    
   postgres:
     container_name: postgres_tech_challenge
     image: postgres:latest

@@ -3,6 +3,17 @@ val MunitVersion = "0.7.29"
 val LogbackVersion = "1.4.5"
 val MunitCatsEffectVersion = "1.0.7"
 val DoobieVersion = "1.0.0-RC1"
+
+enablePlugins(
+  JavaAppPackaging,
+  DockerPlugin
+)
+
+Compile / mainClass := Some("com.example.techchallenge.Main")
+Docker / packageName := "matheussbernardo/techchallenge"
+dockerExposedPorts ++= Seq(8080, 8080)
+dockerBaseImage := "eclipse-temurin:17-jre"
+
 lazy val root = (project in file("."))
   .settings(
     organization := "com.example",
