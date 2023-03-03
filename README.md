@@ -11,8 +11,7 @@ $ docker compose up
 I decided to simplify a lot given the time constraint.
 I created a User and Post package to separate the two concerns of the project.
 
-### Saving Images Design Decision
-
+### Saving Images
 The current implementation is not very scalable regarding images.
 I decided to save the images in plain text encoded as base64.
 But the code is reusable enough where in case it is needed it is possible to change
@@ -21,7 +20,6 @@ I assumed that the image is going to be gzipped by the client and then I decompr
 and convert to a base64 String.
 
 ### HTTP API
-
 Regarding, the HTTP API it has the capability to 
  - Create Users
  - Create Posts
@@ -39,3 +37,6 @@ I have experience in asynchronous systems and would approach this problem by
 adding some mechanism of asynchronicity, it can be through Kafka, Message Queues or even 
 Postgres. It is possible to use webhooks to notify users for example.
 
+## Database
+I did a very simple 1 : N relation from User to Posts, using a FK on the Post table.
+Regarding the code I decided not to add libraries for handling migrations jus to make things simpler.
