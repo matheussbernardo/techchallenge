@@ -1,11 +1,13 @@
 package com.example.techchallenge
 
+import cats.effect.ExitCode
+import cats.effect.IO
+import cats.effect.IOApp
+import cats.implicits._
+import com.example.techchallenge.post.PostStore
+import com.example.techchallenge.user.UserStore
 import doobie._
 import doobie.implicits._
-import cats.effect.{ExitCode, IO, IOApp}
-import com.example.techchallenge.user._
-
-import cats.implicits._
 
 object Main extends IOApp.Simple:
 
@@ -16,7 +18,7 @@ object Main extends IOApp.Simple:
     "admin" // password
   )
 
-  val create =
+  val createUserTable =
     sql"""
       CREATE TABLE "user" (
         name text NOT NULL,
@@ -24,9 +26,26 @@ object Main extends IOApp.Simple:
       )
   """.update.run
 
+  val createPostTable =
+    sql"""
+      CREATE TABLE post (
+        id uuid NOT NULL PRIMARY KEY,
+        content text NOT NULL,
+        image text,
+        date timestamp DEFAULT NOW(),
+        author text NOT NULL REFERENCES "user"(email)
+      )
+  """.update.run
+
   val run =
     for
-      _ <- create.transact[IO](transactor)
-      userStore =  UserStore.impl[IO](transactor)
-      _ <- TechChallengeServer.run[IO](userStore)
+      // Start Migrations
+      _ <- createUserTable.transact[IO](transactor)
+      _ <- createPostTable.transact[IO](transactor)
+      // End Migrations
+
+      userStore = UserStore.impl[IO](transactor)
+      postStore = PostStore.impl[IO](transactor)
+
+      _ <- TechChallengeServer.run[IO](userStore, postStore)
     yield ()
