@@ -2,10 +2,10 @@ package com.example.techchallenge.user
 
 import cats.effect.Concurrent
 import cats.implicits._
-import org.http4s.HttpRoutes
-import org.http4s.dsl.Http4sDsl
-import org.http4s.circe.CirceEntityCodec._
 import io.circe.Codec
+import org.http4s.HttpRoutes
+import org.http4s.circe.CirceEntityCodec._
+import org.http4s.dsl.Http4sDsl
 
 object UserRoutes:
   case class UserReq(name: String, email: String) derives Codec.AsObject
@@ -17,8 +17,8 @@ object UserRoutes:
       for
         userReq <- req.as[UserReq]
         resultFromInsert <- userStore.insert(userReq.name, userReq.email)
-        resp <- resultFromInsert match 
-          case InsertResult.Inserted => Created()
+        resp <- resultFromInsert match
+          case InsertResult.Inserted   => Created()
           case InsertResult.Duplicated => Conflict()
       yield resp
     }
