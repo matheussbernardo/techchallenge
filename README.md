@@ -40,3 +40,10 @@ Postgres. It is possible to use webhooks to notify users for example.
 ## Database
 I did a very simple 1 : N relation from User to Posts, using a FK on the Post table.
 Regarding the code I decided not to add libraries for handling migrations jus to make things simpler.
+
+
+## Next steps and Improvements
+
+- Improve the scalability of the images solution
+- Add more tests
+- Add feature for notifying users when a new post was published
