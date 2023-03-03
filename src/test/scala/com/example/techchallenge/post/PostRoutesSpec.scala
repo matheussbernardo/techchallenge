@@ -5,21 +5,29 @@ import munit.CatsEffectSuite
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.implicits._
-
+import org.http4s.headers._
 import java.time.ZonedDateTime
 import java.util.UUID
 import java.time.LocalDate
 import com.example.techchallenge.post.PostRoutes.PostResponse
 import java.time.LocalDateTime
+import fs2.Stream
 
 class PostRoutesSpec extends CatsEffectSuite:
 
   test("Calling POST /post returns status code 201") {
-    assertIO(retCreatePost.map(_.status), Status.Created)
+    val createPostRequest = Request[IO](Method.POST, uri"/post").withEntity(
+      PostRoutes.PostRequest("Content", "email@email.com")
+    )
+    assertIO(doRequest(createPostRequest).map(_.status), Status.Created)
   }
 
-  private[this] val retCreatePost: IO[Response[IO]] =
+  test("Calling GET /posts returns all posts") {
+    val getAllPostRequest = Request[IO](Method.GET, uri"/posts")
+    assertIO(doRequest(getAllPostRequest).map(_.status), Status.Ok)
+  }
 
+  private[this] val doRequest: Request[IO] => IO[Response[IO]] = request =>
     val postStore =
       new PostStore[IO]:
         def getAll(
@@ -48,8 +56,4 @@ class PostRoutesSpec extends CatsEffectSuite:
             base64Image: String
         ): IO[Unit] = IO.pure(())
 
-    val getHW = Request[IO](Method.POST, uri"/post").withEntity(
-      PostRoutes.PostRequest("Content", "email@email.com")
-    )
-
-    PostRoutes.routes[IO](postStore).orNotFound(getHW)
+    PostRoutes.routes[IO](postStore).orNotFound(request)
