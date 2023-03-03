@@ -9,9 +9,15 @@ import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import java.util.UUID
+import java.time.LocalDate
+import doobie.postgres.syntax.fragment
 
 trait PostStore[F[_]]:
-  def get(id: UUID): F[PostRoutes.PostResponse]
+  def getAll(
+      fromAuthor: Option[String],
+      sortByDate: Option[Boolean]
+  ): F[List[PostRoutes.PostResponse]]
+
   def insert(
       id: UUID,
       content: String,
@@ -26,11 +32,32 @@ trait PostStore[F[_]]:
 object PostStore:
   def impl[F[_]: Async](transactor: Transactor[F]): PostStore[F] =
     new PostStore[F]:
-      def get(id: UUID): F[PostRoutes.PostResponse] =
-        sql"""
-        select id, content, image, author from post where id = $id"
-        """.query[PostRoutes.PostResponse].unique
-        .transact(transactor)
+      def getAll(
+          fromAuthor: Option[String],
+          sortByDate: Option[Boolean]
+      ): F[List[PostRoutes.PostResponse]] =
+        val defaultQuery =
+          sql"""
+            select id, content, image, author, date from post 
+            where (author = $fromAuthor OR $fromAuthor IS NULL)
+            """
+
+        val sortedQuery =
+          sql"""
+            select id, content, image, author, date from post 
+            where (author = $fromAuthor OR $fromAuthor IS NULL)
+            order by $sortByDate DESC
+            """
+
+        val query = sortByDate match
+          case None        => defaultQuery
+          case Some(false) => defaultQuery
+          case Some(true)  => sortedQuery
+
+        query
+          .query[PostRoutes.PostResponse]
+          .to[List]
+          .transact(transactor)
 
       override def insert(
           id: UUID,
@@ -48,6 +75,6 @@ object PostStore:
           base64Image: String
       ): F[Unit] =
         sql"""
-          update post set image = $base64Image where id = $id"
+          update post set image = $base64Image where id = $id
           """.update.run.void
           .transact(transactor)

@@ -11,28 +11,43 @@ import org.http4s.multipart.Multipart
 import fs2.Stream
 import fs2.compression.Compression
 import cats.effect.kernel.Async
+import org.http4s.dsl.impl.OptionalQueryParamDecoderMatcher
+import java.time.LocalDate
+import org.http4s.QueryParamDecoder
+import java.time.LocalDateTime
 
 object PostRoutes:
+
+  object AuthorQueryParamMatcher
+      extends OptionalQueryParamDecoderMatcher[String]("author")
+
+  object SortByDateQueryParamMatcher
+      extends OptionalQueryParamDecoderMatcher[Boolean]("sortByDate")
+
   case class PostRequest(content: String, author: String) derives Codec.AsObject
 
   case class PostResponse(
       id: UUID,
       content: String,
       image: String,
-      author: String
+      author: String,
+      date: LocalDateTime
   ) derives Codec.AsObject
 
   def routes[F[_]: Async](postStore: PostStore[F]): HttpRoutes[F] =
     val dsl = new Http4sDsl[F] {}
     import dsl._
     HttpRoutes.of[F] {
-      case req @ GET -> Root / "post" / id =>
-        val uuid = UUID.fromString(id)
+      // Fetch All Posts and Filter by Author or Sort By Date
+      case req @ GET -> Root / "posts" :? AuthorQueryParamMatcher(
+            author
+          ) +& SortByDateQueryParamMatcher(sortByDate) =>
         for
-          post <- postStore.get(uuid)
+          post <- postStore.getAll(author, sortByDate)
           resp <- Ok(post)
         yield resp
 
+      // Create a Post, returns the Post UUID
       case req @ POST -> Root / "post" =>
         for
           postReq <- req.as[PostRequest]
@@ -41,6 +56,7 @@ object PostRoutes:
           resp <- Created(uuid)
         yield resp
 
+      // Update  a Post with an image
       case req @ PUT -> Root / "post" / "image" / id =>
         req.decode[Multipart[F]] { m =>
           m.parts.find(_.name == Some("file")) match {

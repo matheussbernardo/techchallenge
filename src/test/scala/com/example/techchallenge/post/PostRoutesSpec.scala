@@ -8,6 +8,9 @@ import org.http4s.implicits._
 
 import java.time.ZonedDateTime
 import java.util.UUID
+import java.time.LocalDate
+import com.example.techchallenge.post.PostRoutes.PostResponse
+import java.time.LocalDateTime
 
 class PostRoutesSpec extends CatsEffectSuite:
 
@@ -19,12 +22,18 @@ class PostRoutesSpec extends CatsEffectSuite:
 
     val postStore =
       new PostStore[IO]:
-        def get(id: UUID): IO[PostRoutes.PostResponse] = IO.pure(
-          PostRoutes.PostResponse(
-            UUID.randomUUID(),
-            "content",
-            "image",
-            "author"
+        def getAll(
+            fromAuthor: Option[String],
+            sortByDate: Option[Boolean]
+        ): IO[List[PostRoutes.PostResponse]] = IO.pure(
+          List(
+            PostRoutes.PostResponse(
+              UUID.randomUUID(),
+              "content",
+              "image",
+              "author",
+              LocalDateTime.now()
+            )
           )
         )
         def insert(
